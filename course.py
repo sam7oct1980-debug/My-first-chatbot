@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1hzxzBWvd2Jg5eoNTvuDHYlIJ-O7qFpDK
 """
 
-pip install -r requirements.txt
-
 import os
 import google.generativeai as genai
 import gradio as gr
