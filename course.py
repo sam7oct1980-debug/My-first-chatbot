@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1hzxzBWvd2Jg5eoNTvuDHYlIJ-O7qFpDK
 """
 
-!pip install --upgrade -q langchain langchain-community langchain-google-genai faiss-cpu pypdf python-pptx pandas==2.2.2 openpyxl python-docx gradio
+pip install --upgrade -q langchain langchain-community langchain-google-genai faiss-cpu pypdf python-pptx pandas==2.2.2 openpyxl python-docx gradio
 
 import os
 import google.generativeai as genai
