@@ -8,124 +8,72 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from pptx import Presentation
 from docx import Document
-import glob
+from PyPDF2 import PdfReader
 
-# Securely load API key
-try:
-    os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
-except KeyError:
-    st.error("⚠️ GOOGLE_API_KEY not found! Add it to `secrets.toml` (local) or Streamlit Cloud settings.")
+# **1️⃣ Set Up API Key (Ensure secrets.toml is configured)**
+os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 
+# **2️⃣ File Upload Handling**
+st.title("📚 RAG Chatbot for Course Documents")
+st.write("Upload PDF, DOCX, TXT, or CSV files to retrieve information.")
 
-# **2️⃣ Authenticate Google Drive API (For Cloud Use)**
-def authenticate_google_drive():
-    creds = service_account.Credentials.from_service_account_file(
-        "service_account.json", scopes=["https://www.googleapis.com/auth/drive"]
-    )
-    return build("drive", "v3", credentials=creds)
+uploaded_files = st.file_uploader(
+    "Upload your documents", type=["pdf", "docx", "txt", "csv", "xlsx"], accept_multiple_files=True
+)
 
-drive_service = authenticate_google_drive()
-
-# **3️⃣ Define Folder Path (Google Drive or Local)**
-FOLDER_ID = "your_google_drive_folder_id_here"  # Replace with actual folder ID
-
-# **4️⃣ Function to List Google Drive Files**
-def list_drive_files():
-    results = drive_service.files().list(
-        q=f"'{FOLDER_ID}' in parents",
-        fields="files(id, name)"
-    ).execute()
-    return results.get("files", [])
-
-# **5️⃣ Download Files from Google Drive**
-def download_drive_file(file_id, file_name):
-    file_path = os.path.join("temp_files", file_name)
-    os.makedirs("temp_files", exist_ok=True)
-    
-    request = drive_service.files().get_media(fileId=file_id)
-    with open(file_path, "wb") as f:
-        f.write(request.execute())
-    return file_path
-
-# **6️⃣ Extract Text from Different Document Types**
-def extract_text_from_file(file_path):
+# **3️⃣ Function to Extract Text from Different File Types**
+def extract_text_from_file(file):
     text = ""
+    if file.name.endswith(".pdf"):
+        pdf_reader = PdfReader(file)
+        text = "\n".join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
 
-    if file_path.endswith(".pdf"):
-        loader = PyPDFLoader(file_path)
-        documents = loader.load()
-        text = "\n".join([doc.page_content for doc in documents])
+    elif file.name.endswith(".docx"):
+        doc = Document(file)
+        text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
 
-    elif file_path.endswith(".docx"):
-        doc = Document(file_path)
-        text = "\n".join([para.text for para in doc.paragraphs])
+    elif file.name.endswith(".txt"):
+        text = file.read().decode("utf-8")
 
-    elif file_path.endswith(".pptx"):
-        presentation = Presentation(file_path)
-        text_list = []
-        for slide in presentation.slides:
-            for shape in slide.shapes:
-                if hasattr(shape, "text") and shape.text.strip():
-                    text_list.append(shape.text.strip())
-        text = "\n".join(text_list)
-
-    elif file_path.endswith(".xlsx"):
-        df = pd.read_excel(file_path)
+    elif file.name.endswith(".csv") or file.name.endswith(".xlsx"):
+        df = pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
         text = df.to_string()
-
-    elif file_path.endswith(".txt"):
-        with open(file_path, "r", encoding="utf-8") as f:
-            text = f.read()
 
     return text.strip()
 
-# **7️⃣ Load and Process Documents**
-def load_and_process_documents():
-    files = list_drive_files()
-    all_texts = []
-    
-    if not files:
-        raise ValueError("⚠️ No supported files found in the specified Google Drive folder!")
-
-    for file in files:
-        file_path = download_drive_file(file["id"], file["name"])
-        extracted_text = extract_text_from_file(file_path)
+# **4️⃣ Process Uploaded Files**
+all_texts = []
+if uploaded_files:
+    for file in uploaded_files:
+        extracted_text = extract_text_from_file(file)
         if extracted_text:
             all_texts.append(extracted_text)
 
+# **5️⃣ Chunking & Vectorization**
+if all_texts:
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     docs = text_splitter.create_documents(all_texts)
 
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-V2")
     vectorstore = FAISS.from_documents(docs, embeddings)
 
-    return vectorstore
+    # **6️⃣ AI-Powered Retrieval**
+    def ask_question(query):
+        if not vectorstore:
+            return "⚠️ No documents available. Please upload and process files."
 
-# **8️⃣ Load Documents at Startup**
-vectorstore = load_and_process_documents()
+        llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp")
+        qa = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=vectorstore.as_retriever())
+        return qa.run(query)
 
-# **9️⃣ AI-Powered Question Answering**
-def ask_question(query):
-    if not vectorstore:
-        return "⚠️ No documents available. Please check the Drive folder and restart the application."
-
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp")
-    qa = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=vectorstore.as_retriever())
-
-    return qa.run(query)
-
-# **🔹 10️⃣ Streamlit UI**
-st.markdown("<h2 style='text-align: center; color: blue;'>✦ ⚙️ AI-Powered Course Chatbot ✦</h2>", unsafe_allow_html=True)
-st.write("This chatbot retrieves answers from course documents stored in Google Drive.")
-
-query = st.text_input("Ask a question:")
-if st.button("💬 Get Answer"):
-    if query:
-        response = ask_question(query)
-        st.write(f"**AI:** {response}")
-    else:
-        st.warning("Please enter a question.")
+    # **7️⃣ Streamlit Chat Interface**
+    query = st.text_input("Ask a question:")
+    if st.button("💬 Get Answer"):
+        if query:
+            response = ask_question(query)
+            st.write(f"**AI:** {response}")
+        else:
+            st.warning("Please enter a question.")
+else:
+    st.info("📂 Please upload some documents to get started.")
