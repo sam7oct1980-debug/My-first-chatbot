@@ -27,7 +27,10 @@ os.environ['GOOGLE_API_KEY'] = "AIzaSyBMx_ZelxjCy6zNnaaArj78xd1rx8VWTdA"
 
 # Define the folder path containing documents (Modify as per your Drive structure)
 DOCUMENTS_FOLDER_PATH = "D:/Agentic AI Assignment/"
-
+if os.path.exists(DOCUMENTS_FOLDER_PATH):
+    print(f"✅ Folder found: {DOCUMENTS_FOLDER_PATH}")
+else:
+    print(f"❌ Folder NOT found: {DOCUMENTS_FOLDER_PATH}. Check the path!")
 vectorstore_path = "D:/Agentic AI Assignment/vectorstore"  # Modify this path as needed
 
 # Function to extract text from different document types
