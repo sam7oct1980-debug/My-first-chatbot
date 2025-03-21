@@ -14,8 +14,12 @@ from pptx import Presentation
 from docx import Document
 import glob
 
-# **1️⃣ Set Up API Keys & Environment**
-os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+# Securely load API key
+try:
+    os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+except KeyError:
+    st.error("⚠️ GOOGLE_API_KEY not found! Add it to `secrets.toml` (local) or Streamlit Cloud settings.")
+
 
 # **2️⃣ Authenticate Google Drive API (For Cloud Use)**
 def authenticate_google_drive():
