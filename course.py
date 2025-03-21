@@ -22,71 +22,43 @@ from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 import streamlit as st
 import streamlit as st
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-
-# Load Google Drive API credentials from service account file
-creds = service_account.Credentials.from_service_account_file(
-    "service_account.json",  # Replace with your actual service account file path
-    scopes=["https://www.googleapis.com/auth/drive"]
-)
-
-# Initialize Google Drive API service
-drive_service = build("drive", "v3", credentials=creds)
 
 # Set API Key
 os.environ['GOOGLE_API_KEY'] = "AIzaSyBMx_ZelxjCy6zNnaaArj78xd1rx8VWTdA"
 
 # Define the folder path containing documents (Modify as per your Drive structure)
-DOCUMENTS_FOLDER_PATH = "/content/drive/My Drive/Agentic AI Assignment/"
+DOCUMENTS_FOLDER_PATH = "D:/Agentic AI Assignment/"
 
-vectorstore_path = "/content/drive/My Drive/Agentic AI Assignment/vectorstore"  # Modify this path as needed
-
-# Function to list Google Drive files
-def list_drive_files():
-    results = drive_service.files().list(pageSize=10, fields="files(id, name)").execute()
-    files = results.get("files", [])
-    return files
-
-# Streamlit UI
-st.title("📂 Google Drive Access in Streamlit")
+vectorstore_path = "D:/Agentic AI Assignment/vectorstore"  # Modify this path as needed
 
 # Function to extract text from different document types
-
 def extract_text_from_file(file_path):
-    if st.button("📜 List My Google Drive Files"):
-        """Extracts text from PDF, DOCX, PPTX, and XLSX files."""
-        text = ""
-        files = list_drive_files()
-        if files:
-            for file in files:
-                if file_path.endswith(".pdf"):
-                    loader = PyPDFLoader(file_path)
-                    documents = loader.load()
-                    text = "\n".join([doc.page_content for doc in documents])
+    """Extracts text from PDF, DOCX, PPTX, and XLSX files."""
+    text = ""
 
-                elif file_path.endswith(".docx"):
-                    doc = Document(file_path)
-                    text = "\n".join([para.text for para in doc.paragraphs])
+    if file_path.endswith(".pdf"):
+        loader = PyPDFLoader(file_path)
+        documents = loader.load()
+        text = "\n".join([doc.page_content for doc in documents])
 
-                elif file_path.endswith(".ppt") or file_path.endswith(".pptx"):
-                    presentation = Presentation(file_path)
-                    text_list = []
-                    for slide in presentation.slides:
-                        for shape in slide.shapes:
-                            if hasattr(shape, "text") and shape.text.strip():  # Ensure shape has text
-                                text_list.append(shape.text.strip())  # Append clean text
-                    text = "\n".join(text_list)
+    elif file_path.endswith(".docx"):
+        doc = Document(file_path)
+        text = "\n".join([para.text for para in doc.paragraphs])
 
-                elif file_path.endswith(".xls") or file_path.endswith(".xlsx"):
-                    df = pd.read_excel(file_path)
-                    text = df.to_string()  # Convert entire spreadsheet to string
+    elif file_path.endswith(".ppt") or file_path.endswith(".pptx"):
+        presentation = Presentation(file_path)
+        text_list = []
+        for slide in presentation.slides:
+          for shape in slide.shapes:
+            if hasattr(shape, "text") and shape.text.strip():  # Ensure shape has text
+                text_list.append(shape.text.strip())  # Append clean text
+        text = "\n".join(text_list)
 
-                return text.strip()
-        else:
-            st.write("No files found in Drive.")
+    elif file_path.endswith(".xls") or file_path.endswith(".xlsx"):
+        df = pd.read_excel(file_path)
+        text = df.to_string()  # Convert entire spreadsheet to string
 
-
+    return text.strip()
 
 # Function to load and process all supported files from the given folder
 def load_and_process_documents(folder_path):
