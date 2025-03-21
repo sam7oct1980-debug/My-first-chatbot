@@ -15,7 +15,7 @@ from docx import Document
 import glob
 
 # **1️⃣ Set Up API Keys & Environment**
-os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBMx_ZelxjCy6zNnaaArj78xd1rx8VWTdA"
 
 # **2️⃣ Authenticate Google Drive API (For Cloud Use)**
 def authenticate_google_drive():
@@ -73,9 +73,6 @@ def extract_text_from_file(file_path):
         df = pd.read_excel(file_path)
         text = df.to_string()
 
-    elif file_path.endswith(".txt"):
-        with open(file_path, "r", encoding="utf-8") as f:
-            text = f.read()
 
     return text.strip()
 
