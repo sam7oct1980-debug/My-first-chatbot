@@ -21,7 +21,6 @@ from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 import streamlit as st
-import streamlit as st
 
 # Set API Key
 os.environ['GOOGLE_API_KEY'] = "AIzaSyBMx_ZelxjCy6zNnaaArj78xd1rx8VWTdA"
@@ -66,7 +65,6 @@ def load_and_process_documents(folder_path):
     all_texts = []
     supported_formats = ["pdf", "docx", "ppt", "pptx", "xls", "xlsx"]
     files = sum([glob.glob(f"{folder_path}/**/*.{ext}", recursive=True) for ext in supported_formats], [])
-
 
     if not files:
         raise ValueError("⚠️ No supported files found in the specified folder!")
