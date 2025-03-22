@@ -14,8 +14,8 @@ from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # **1️⃣ Set API Key
-os.environ['GOOGLE_API_KEY'] = st.secrets["GOOGLE_API_KEY"]
-
+'''os.environ['GOOGLE_API_KEY'] = st.secrets["GOOGLE_API_KEY"]
+'''
 try:
     GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
     os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
