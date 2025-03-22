@@ -1,4 +1,3 @@
-i# -*- coding: utf-8 -*-
 import os
 import google.generativeai as genai
 import gradio as gr
