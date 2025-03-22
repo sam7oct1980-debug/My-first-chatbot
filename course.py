@@ -97,4 +97,4 @@ with gr.Blocks() as demo:
     submit_button.click(ask_question, inputs=[query_input], outputs=[output_text])
 
 # **9️⃣ Launch the Gradio Interface**
-demo.launch()
+demo.launch(share=True)
