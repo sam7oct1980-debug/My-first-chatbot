@@ -16,6 +16,13 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 # **1️⃣ Set API Key
 os.environ['GOOGLE_API_KEY'] = st.secrets["GOOGLE_API_KEY"]
 
+try:
+    GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
+    os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+    st.success("✅ Google API Key Loaded Successfully!")
+except KeyError:
+    st.error("⚠️ GOOGLE_API_KEY not found! Add it to `secrets.toml` (local) or Streamlit Cloud settings.")
+
 # **2️⃣ Define Folder Path to Read Files from GitHub Repository Root**
 DOCUMENTS_FOLDER_PATH = os.getcwd()  # Uses the directory where this script is placed
 
