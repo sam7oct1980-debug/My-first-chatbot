@@ -14,7 +14,7 @@ from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # **1️⃣ Set API Key
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBMx_ZelxjCy6zNnaaArj78xd1rx8VWTdA"
+os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 
 # **2️⃣ Define Folder Path to Read Files from GitHub Repository Root**
 DOCUMENTS_FOLDER_PATH = os.getcwd()  # Uses the directory where this script is placed
