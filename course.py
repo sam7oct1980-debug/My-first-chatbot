@@ -1,5 +1,6 @@
-i# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import os
+import streamlit as st
 import google.generativeai as genai
 import gradio as gr
 import glob
@@ -13,8 +14,11 @@ from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# **1️⃣ Set API Key (Ensure secrets.toml is configured for security)**
-os.environ['GOOGLE_API_KEY'] = "AIzaSyBMx_ZelxjCy6zNnaaArj78xd1rx8VWTdA"
+# **1️⃣ Securely Load API Key with Error Handling**
+try:
+    os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+except KeyError:
+    st.error("⚠️ GOOGLE_API_KEY not found! Add it to `.streamlit/secrets.toml` (local) or Streamlit Cloud settings.")
 
 # **2️⃣ Define Folder Path to Read Files from GitHub Repository Root**
 DOCUMENTS_FOLDER_PATH = os.getcwd()  # Uses the directory where this script is placed
@@ -56,7 +60,8 @@ def load_and_process_documents(folder_path):
     files = sum([glob.glob(f"{folder_path}/*.{ext}") for ext in supported_formats], [])
 
     if not files:
-        raise ValueError("⚠️ No supported files found in the specified folder!")
+        st.error("⚠️ No supported files found in the specified folder!")
+        return None
 
     for file in files:
         extracted_text = extract_text_from_file(file)
